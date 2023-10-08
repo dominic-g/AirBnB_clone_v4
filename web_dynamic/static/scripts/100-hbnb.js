@@ -1,31 +1,36 @@
+// Event listener for checkbox changes
 $(document).ready(function () {
+  const states = {};
+  const cities = {};
   const amenities = {};
-  const checkedAmenities = {};
 
   // Event listener for checkbox changes
   $(document).on('change', "input[type='checkbox']", function () {
-    if (this.checked) {
-      amenities[$(this).data('id')] = $(this).data('name');
-    } else {
-      delete amenities[$(this).data('id')];
-    }
-    const lst = Object.values(amenities);
-    if (lst.length > 0) {
-      $('div.amenities > h4').text(Object.values(amenities).join(', '));
-    } else {
-      $('div.amenities > h4').html('&nbsp;');
-    }
-  });
+    const element = $(this);
+    const id = element.data('id');
+    const name = element.data('name');
 
-  // AJAX request to check API status
-  $.get('http://0.0.0.0:5001/api/v1/status/', function (data, textStatus) {
-    if (textStatus === 'success') {
-      if (data.status === 'OK') {
-        $('#api_status').addClass('available');
+    if (element.parent().hasClass('locations')) {
+      // Checkbox belongs to a State
+      if (this.checked) {
+        states[id] = name;
       } else {
-        $('#api_status').removeClass('available');
+        delete states[id];
+      }
+    } else if (element.parent().hasClass('popover')) {
+      // Checkbox belongs to a City
+      if (this.checked) {
+        cities[id] = name;
+      } else {
+        delete cities[id];
       }
     }
+
+    // Update the h4 tag inside the div Locations with the list of States or Cities checked
+    const selectedLocations = Object.values(states)
+      .concat(Object.values(cities))
+      .join(', ');
+    $('div.locations > h4').text('Selected Locations: ' + selectedLocations);
   });
 
   // AJAX request to fetch and display places data
@@ -37,20 +42,20 @@ $(document).ready(function () {
     contentType: 'application/json',
     success: function (data) {
       for (let i = 0; i < data.length; i++) {
-        const pl = data[i];
-        $('.places ').append(
+        const place = data[i];
+        $('.places').append(
           '<article><h2>' +
-            pl.name +
+            place.name +
             '</h2><div class="price_by_night"><p>$' +
-            pl.price_by_night +
+            place.price_by_night +
             '</p></div><div class="information"><div class="max_guest"><div class="guest_image"></div><p>' +
-            pl.max_guest +
+            place.max_guest +
             '</p></div><div class="number_rooms"><div class="bed_image"></div><p>' +
-            pl.number_rooms +
+            place.number_rooms +
             '</p></div><div class="number_bathrooms"><div class="bath_image"></div><p>' +
-            pl.number_bathrooms +
+            place.number_bathrooms +
             '</p></div></div><div class="description"><p>' +
-            pl.description +
+            place.description +
             '</p></div></article>'
         );
       }
@@ -63,7 +68,11 @@ $(document).ready(function () {
     $.ajax({
       type: 'POST',
       url: 'http://0.0.0.0:5001/api/v1/places_search',
-      data: JSON.stringify({ amenities: Object.keys(checkedAmenities) }),
+      data: JSON.stringify({
+        amenities: Object.keys(amenities),
+        states: Object.keys(states),
+        cities: Object.keys(cities)
+      }),
       dataType: 'json',
       contentType: 'application/json',
       success: function (data) {
