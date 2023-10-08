@@ -23,6 +23,14 @@ def close_db(*args, **kwargs):
 @app.route('/0-hbnb', strict_slashes=False)
 def show_hbnb():
     """ HBNB is alive! """
+    """
+    might have been a mistake on their side
+    if 100-hbnb.html is not present use 8-hbnb.html
+    if os.path.isfile('templates/100-hbnb.html'):
+        template_name = '100-hbnb.html'
+    else:
+        template_name = '8-hbnb.html'
+    """
     states = storage.all('State')
     amenities = storage.all('Amenity')
     places = storage.all('Place')
